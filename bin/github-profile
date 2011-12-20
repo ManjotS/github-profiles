@@ -1,0 +1,56 @@
+#!/usr/bin/env ruby
+
+require 'lib/trollop'
+SUB_COMMANDS = %w(add use)
+global_opts = Trollop::options do
+  banner "github profile switcher"
+  stop_on SUB_COMMANDS
+end
+
+cmd = ARGV.shift
+cmd_opts = case cmd
+when "add"
+  Trollop::options do
+    opt :profile, "Add profile name", :short => '-p', :type => String
+    opt :name, "Add name", :short => "-n", :type => String
+    opt :email, "Add email", :short => "-e", :type => String
+  end
+when "use"  # parse copy options
+  Trollop::options do
+    opt :profile, "Choose profile to use", :short => '-p', :type => String
+  end
+else
+  Trollop::die "unknown subcommand #{cmd.inspect}"
+end
+
+@options = cmd_opts
+
+def validate(*args)
+  args.each { |arg| Trollop::die arg, "must be given" unless @options[:"#{arg}_given"] }
+end
+
+def add
+  validate :profile, :name, :email
+  
+  `git config --global profile.#{@options[:profile]}.name "#{@options[:name]}"`
+  `git config --global profile.#{@options[:profile]}.email "#{@options[:email]}"`
+
+  puts "added #{@options[:profile]}"
+end
+
+def use
+  validate :profile
+
+  profile = `git config --get-regexp profile.#{@options[:profile]}`
+  profiles = profile.split("\n")
+
+  profiles.each do |profile| 
+    key = profile.split(" ").first.split(".").last
+    value = profile.split(" ")[1..-1].join(" ")
+
+    `git config user.#{key} "#{value}"`
+  end
+end
+
+
+send(cmd)

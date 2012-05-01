@@ -1,6 +1,9 @@
 #!/usr/bin/env ruby
 
-require 'lib/trollop'
+require 'pathname'
+real_path = Pathname.new(__FILE__).realpath
+require File.join(File.dirname(real_path), '..', 'lib', 'trollop')
+
 SUB_COMMANDS = %w(add use)
 global_opts = Trollop::options do
   banner "github profile switcher"
